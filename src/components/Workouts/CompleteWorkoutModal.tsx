@@ -48,11 +48,11 @@ export default function CompleteWorkoutModal({ isOpen, onClose, onSuccess, worko
           planned_workout_id: workout.id,
           workout_date: workout.workout_date,
           discipline: workout.discipline,
-          actual_duration_minutes: actualDuration ? parseInt(actualDuration) : null,
+          actual_duration_minutes: parseInt(actualDuration),
           actual_distance_meters: distanceMeters,
-          avg_heart_rate: avgHeartRate ? parseInt(avgHeartRate) : null,
-          perceived_effort: parseInt(perceivedEffort),
-          notes,
+          average_heart_rate: avgHeartRate ? parseInt(avgHeartRate) : null,
+          rpe: parseInt(perceivedEffort),
+          workout_notes: notes,
         });
 
       if (insertError) throw insertError;
