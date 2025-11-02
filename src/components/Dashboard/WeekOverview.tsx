@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import AddWorkoutModal from '../Workouts/AddWorkoutModal';
 import EditWorkoutModal from '../Workouts/EditWorkoutModal';
+import CompleteWorkoutModal from '../Workouts/CompleteWorkoutModal';
 import { formatDateForDB } from '../../lib/dateUtils';
 
 interface PlannedWorkout {
@@ -23,6 +24,7 @@ export default function WeekOverview() {
   const [workouts, setWorkouts] = useState<PlannedWorkout[]>([]);
   const [showAddWorkout, setShowAddWorkout] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<PlannedWorkout | null>(null);
+  const [completingWorkout, setCompletingWorkout] = useState<PlannedWorkout | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
 
   useEffect(() => {
@@ -141,6 +143,18 @@ export default function WeekOverview() {
     setEditingWorkout(null);
   };
 
+  const handleCompleteSuccess = () => {
+    loadWeekWorkouts();
+    setCompletingWorkout(null);
+  };
+
+  const handleWorkoutClick = (workout: PlannedWorkout) => {
+    if (workout.completed) {
+      return;
+    }
+    setCompletingWorkout(workout);
+  };
+
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
       <div className="flex items-center justify-between mb-6">
@@ -215,24 +229,34 @@ export default function WeekOverview() {
           </p>
         ) : (
           workouts.map((workout) => (
-            <button
+            <div
               key={workout.id}
-              onClick={() => !workout.completed && setEditingWorkout(workout)}
-              className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+              className={`p-4 rounded-lg border-2 transition-all ${
                 workout.completed
                   ? 'bg-green-50 border-green-200'
-                  : 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer'
+                  : 'bg-gray-50 border-gray-200'
               }`}
-              disabled={workout.completed}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-3">
+                <button
+                  onClick={() => handleWorkoutClick(workout)}
+                  disabled={workout.completed}
+                  className={`p-1 rounded-lg transition-colors ${
+                    workout.completed
+                      ? 'cursor-default'
+                      : 'hover:bg-green-100 cursor-pointer'
+                  }`}
+                  title={workout.completed ? 'Completed' : 'Mark as complete'}
+                >
+                  {workout.completed ? (
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  ) : (
+                    <Circle className="w-6 h-6 text-gray-400" />
+                  )}
+                </button>
+
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    {workout.completed ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-gray-400" />
-                    )}
                     <span className={`px-2 py-1 rounded text-xs font-medium border ${getDisciplineColor(workout.discipline)}`}>
                       {workout.discipline}
                     </span>
@@ -252,11 +276,18 @@ export default function WeekOverview() {
                     )}
                   </div>
                 </div>
+
                 {!workout.completed && (
-                  <Edit2 className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                  <button
+                    onClick={() => setEditingWorkout(workout)}
+                    className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                    title="Edit workout"
+                  >
+                    <Edit2 className="w-4 h-4 text-gray-600" />
+                  </button>
                 )}
               </div>
-            </button>
+            </div>
           ))
         )}
       </div>
@@ -273,6 +304,13 @@ export default function WeekOverview() {
         onClose={() => setEditingWorkout(null)}
         onSuccess={handleEditSuccess}
         workout={editingWorkout}
+      />
+
+      <CompleteWorkoutModal
+        isOpen={!!completingWorkout}
+        onClose={() => setCompletingWorkout(null)}
+        onSuccess={handleCompleteSuccess}
+        workout={completingWorkout}
       />
     </div>
   );
