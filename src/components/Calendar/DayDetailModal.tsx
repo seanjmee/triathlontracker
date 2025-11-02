@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { X, Plus, CheckCircle2, Circle, Clock, TrendingUp, Heart, Activity } from 'lucide-react';
+import { X, Plus, CheckCircle2, Circle, Clock, TrendingUp, Heart, Activity, Trash2 } from 'lucide-react';
 import AddWorkoutModal from '../Workouts/AddWorkoutModal';
 import { parseDBDate } from '../../lib/dateUtils';
+import { supabase } from '../../lib/supabase';
 
 interface Workout {
   id: string;
@@ -70,6 +71,40 @@ export default function DayDetailModal({ date, workouts, onClose, onRefresh }: D
     onRefresh();
     setShowAddPlanned(false);
     setShowAddCompleted(false);
+  };
+
+  const handleDeleteCompleted = async (workoutId: string) => {
+    if (!confirm('Are you sure you want to delete this completed workout?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('completed_workouts')
+        .delete()
+        .eq('id', workoutId);
+
+      if (error) throw error;
+
+      onRefresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete workout');
+    }
+  };
+
+  const handleDeletePlanned = async (workoutId: string) => {
+    if (!confirm('Are you sure you want to delete this planned workout?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('planned_workouts')
+        .delete()
+        .eq('id', workoutId);
+
+      if (error) throw error;
+
+      onRefresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete workout');
+    }
   };
 
   return (
@@ -169,7 +204,16 @@ export default function DayDetailModal({ date, workouts, onClose, onRefresh }: D
                             >
                               {workout.discipline}
                             </span>
-                            <CheckCircle2 className="w-5 h-5 text-green-600" />
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="w-5 h-5 text-green-600" />
+                              <button
+                                onClick={() => handleDeleteCompleted(workout.id)}
+                                className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                                title="Delete workout"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </button>
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3 mt-3">
@@ -222,7 +266,16 @@ export default function DayDetailModal({ date, workouts, onClose, onRefresh }: D
                             >
                               {workout.discipline}
                             </span>
-                            <Circle className="w-5 h-5 text-gray-400" />
+                            <div className="flex items-center gap-2">
+                              <Circle className="w-5 h-5 text-gray-400" />
+                              <button
+                                onClick={() => handleDeletePlanned(workout.id)}
+                                className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                                title="Delete workout"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </button>
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3 mt-3">
