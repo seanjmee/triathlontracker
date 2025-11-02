@@ -51,19 +51,44 @@ export default function WeekOverview() {
 
     const { data: completed } = await supabase
       .from('completed_workouts')
-      .select('planned_workout_id')
+      .select('*')
       .eq('user_id', user!.id)
       .gte('workout_date', startDateStr)
       .lte('workout_date', endDateStr);
 
-    const completedIds = new Set(completed?.map(c => c.planned_workout_id) || []);
+    const completedMap = new Map(completed?.map(c => [c.planned_workout_id, c]) || []);
+    const allWorkouts: PlannedWorkout[] = [];
 
-    const workoutsWithStatus = (planned || []).map(w => ({
-      ...w,
-      completed: completedIds.has(w.id),
-    }));
+    planned?.forEach(p => {
+      const comp = completedMap.get(p.id);
+      allWorkouts.push({
+        ...p,
+        completed: !!comp,
+      });
+      if (comp) {
+        completedMap.delete(p.id);
+      }
+    });
 
-    setWorkouts(workoutsWithStatus);
+    completedMap.forEach(c => {
+      if (c.planned_workout_id === null) {
+        allWorkouts.push({
+          id: c.id,
+          workout_date: c.workout_date,
+          discipline: c.discipline,
+          workout_type: null,
+          planned_duration_minutes: c.actual_duration_minutes,
+          planned_distance_meters: c.actual_distance_meters,
+          description: c.notes || null,
+          notes: c.notes || null,
+          completed: true,
+        });
+      }
+    });
+
+    allWorkouts.sort((a, b) => a.workout_date.localeCompare(b.workout_date));
+
+    setWorkouts(allWorkouts);
   };
 
   const getDisciplineColor = (discipline: string) => {
