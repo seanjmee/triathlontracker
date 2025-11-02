@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,14 +8,15 @@ interface AddWorkoutModalProps {
   onClose: () => void;
   onSuccess: () => void;
   mode: 'planned' | 'completed';
+  defaultDate?: string;
 }
 
-export default function AddWorkoutModal({ isOpen, onClose, onSuccess, mode }: AddWorkoutModalProps) {
+export default function AddWorkoutModal({ isOpen, onClose, onSuccess, mode, defaultDate }: AddWorkoutModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
+  const [workoutDate, setWorkoutDate] = useState(defaultDate || new Date().toISOString().split('T')[0]);
   const [discipline, setDiscipline] = useState('run');
   const [workoutType, setWorkoutType] = useState('endurance');
   const [duration, setDuration] = useState('');
@@ -25,6 +26,12 @@ export default function AddWorkoutModal({ isOpen, onClose, onSuccess, mode }: Ad
   const [rpe, setRpe] = useState('');
   const [feeling, setFeeling] = useState('good');
   const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (isOpen && defaultDate) {
+      setWorkoutDate(defaultDate);
+    }
+  }, [isOpen, defaultDate]);
 
   if (!isOpen) return null;
 

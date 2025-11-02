@@ -308,6 +308,7 @@ export default function DayDetailModal({ date, workouts, onClose, onRefresh }: D
         onClose={() => setShowAddPlanned(false)}
         onSuccess={handleSuccess}
         mode="planned"
+        defaultDate={date}
       />
 
       <AddWorkoutModal
@@ -315,6 +316,7 @@ export default function DayDetailModal({ date, workouts, onClose, onRefresh }: D
         onClose={() => setShowAddCompleted(false)}
         onSuccess={handleSuccess}
         mode="completed"
+        defaultDate={date}
       />
     </>
   );
