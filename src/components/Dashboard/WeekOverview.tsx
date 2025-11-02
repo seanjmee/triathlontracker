@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Plus, CheckCircle2, Circle } from 'lucide-react';
+import { Plus, CheckCircle2, Circle, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import AddWorkoutModal from '../Workouts/AddWorkoutModal';
+import EditWorkoutModal from '../Workouts/EditWorkoutModal';
 
 interface PlannedWorkout {
   id: string;
@@ -12,6 +13,7 @@ interface PlannedWorkout {
   planned_duration_minutes: number | null;
   planned_distance_meters: number | null;
   description: string | null;
+  notes?: string | null;
   completed?: boolean;
 }
 
@@ -19,17 +21,19 @@ export default function WeekOverview() {
   const { user } = useAuth();
   const [workouts, setWorkouts] = useState<PlannedWorkout[]>([]);
   const [showAddWorkout, setShowAddWorkout] = useState(false);
+  const [editingWorkout, setEditingWorkout] = useState<PlannedWorkout | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
 
   useEffect(() => {
     if (user) {
       loadWeekWorkouts();
     }
-  }, [user]);
+  }, [user, weekOffset]);
 
   const loadWeekWorkouts = async () => {
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7));
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
 
@@ -81,7 +85,7 @@ export default function WeekOverview() {
   const getWeekDays = () => {
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7));
 
     return Array.from({ length: 7 }, (_, i) => {
       const date = new Date(startOfWeek);
@@ -90,13 +94,52 @@ export default function WeekOverview() {
     });
   };
 
+  const getWeekLabel = () => {
+    if (weekOffset === 0) return 'This Week';
+    if (weekOffset === 1) return 'Next Week';
+    if (weekOffset === -1) return 'Last Week';
+    const weekDays = getWeekDays();
+    const startDate = weekDays[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const endDate = weekDays[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${startDate} - ${endDate}`;
+  };
+
   const weekDays = getWeekDays();
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const handleEditSuccess = () => {
+    loadWeekWorkouts();
+    setEditingWorkout(null);
+  };
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">This Week</h3>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setWeekOffset(weekOffset - 1)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Previous week"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <h3 className="text-lg font-semibold text-gray-900">{getWeekLabel()}</h3>
+          <button
+            onClick={() => setWeekOffset(weekOffset + 1)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Next week"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+          {weekOffset !== 0 && (
+            <button
+              onClick={() => setWeekOffset(0)}
+              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+            >
+              Today
+            </button>
+          )}
+        </div>
         <button
           onClick={() => setShowAddWorkout(true)}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
@@ -140,13 +183,15 @@ export default function WeekOverview() {
           </p>
         ) : (
           workouts.map((workout) => (
-            <div
+            <button
               key={workout.id}
-              className={`p-4 rounded-lg border-2 transition-all ${
+              onClick={() => !workout.completed && setEditingWorkout(workout)}
+              className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
                 workout.completed
                   ? 'bg-green-50 border-green-200'
-                  : 'bg-gray-50 border-gray-200'
+                  : 'bg-gray-50 border-gray-200 hover:border-blue-300 hover:bg-blue-50 cursor-pointer'
               }`}
+              disabled={workout.completed}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -175,8 +220,11 @@ export default function WeekOverview() {
                     )}
                   </div>
                 </div>
+                {!workout.completed && (
+                  <Edit2 className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                )}
               </div>
-            </div>
+            </button>
           ))
         )}
       </div>
@@ -186,6 +234,13 @@ export default function WeekOverview() {
         onClose={() => setShowAddWorkout(false)}
         onSuccess={loadWeekWorkouts}
         mode="planned"
+      />
+
+      <EditWorkoutModal
+        isOpen={!!editingWorkout}
+        onClose={() => setEditingWorkout(null)}
+        onSuccess={handleEditSuccess}
+        workout={editingWorkout}
       />
     </div>
   );
