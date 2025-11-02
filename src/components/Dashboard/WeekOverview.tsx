@@ -1,0 +1,192 @@
+import { useEffect, useState } from 'react';
+import { Plus, CheckCircle2, Circle } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import AddWorkoutModal from '../Workouts/AddWorkoutModal';
+
+interface PlannedWorkout {
+  id: string;
+  workout_date: string;
+  discipline: string;
+  workout_type: string | null;
+  planned_duration_minutes: number | null;
+  planned_distance_meters: number | null;
+  description: string | null;
+  completed?: boolean;
+}
+
+export default function WeekOverview() {
+  const { user } = useAuth();
+  const [workouts, setWorkouts] = useState<PlannedWorkout[]>([]);
+  const [showAddWorkout, setShowAddWorkout] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadWeekWorkouts();
+    }
+  }, [user]);
+
+  const loadWeekWorkouts = async () => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const { data: planned } = await supabase
+      .from('planned_workouts')
+      .select('*')
+      .eq('user_id', user!.id)
+      .gte('workout_date', startOfWeek.toISOString().split('T')[0])
+      .lte('workout_date', endOfWeek.toISOString().split('T')[0])
+      .order('workout_date');
+
+    const { data: completed } = await supabase
+      .from('completed_workouts')
+      .select('planned_workout_id')
+      .eq('user_id', user!.id)
+      .gte('workout_date', startOfWeek.toISOString().split('T')[0])
+      .lte('workout_date', endOfWeek.toISOString().split('T')[0]);
+
+    const completedIds = new Set(completed?.map(c => c.planned_workout_id) || []);
+
+    const workoutsWithStatus = (planned || []).map(w => ({
+      ...w,
+      completed: completedIds.has(w.id),
+    }));
+
+    setWorkouts(workoutsWithStatus);
+  };
+
+  const getDisciplineColor = (discipline: string) => {
+    const colors: { [key: string]: string } = {
+      swim: 'bg-blue-100 text-blue-700 border-blue-200',
+      bike: 'bg-green-100 text-green-700 border-green-200',
+      run: 'bg-orange-100 text-orange-700 border-orange-200',
+      brick: 'bg-purple-100 text-purple-700 border-purple-200',
+      strength: 'bg-gray-100 text-gray-700 border-gray-200',
+      rest: 'bg-teal-100 text-teal-700 border-teal-200',
+    };
+    return colors[discipline.toLowerCase()] || 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
+  const formatDistance = (meters: number | null) => {
+    if (!meters) return '';
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)}km`;
+    }
+    return `${meters}m`;
+  };
+
+  const getWeekDays = () => {
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      return date;
+    });
+  };
+
+  const weekDays = getWeekDays();
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-900">This Week</h3>
+        <button
+          onClick={() => setShowAddWorkout(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+        >
+          <Plus className="w-4 h-4" />
+          Add Workout
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-2 mb-4">
+        {weekDays.map((day, i) => {
+          const dateStr = day.toISOString().split('T')[0];
+          const dayWorkouts = workouts.filter(w => w.workout_date === dateStr);
+          const isToday = day.toDateString() === new Date().toDateString();
+
+          return (
+            <div
+              key={i}
+              className={`text-center p-2 rounded-lg ${
+                isToday ? 'bg-blue-50 border-2 border-blue-500' : 'border border-gray-200'
+              }`}
+            >
+              <p className="text-xs text-gray-500">{dayNames[i]}</p>
+              <p className={`text-lg font-semibold ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                {day.getDate()}
+              </p>
+              {dayWorkouts.length > 0 && (
+                <div className="mt-1 flex justify-center">
+                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="space-y-3 max-h-96 overflow-y-auto">
+        {workouts.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">
+            No workouts scheduled this week. Click "Add Workout" to get started!
+          </p>
+        ) : (
+          workouts.map((workout) => (
+            <div
+              key={workout.id}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                workout.completed
+                  ? 'bg-green-50 border-green-200'
+                  : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    {workout.completed ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-gray-400" />
+                    )}
+                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getDisciplineColor(workout.discipline)}`}>
+                      {workout.discipline}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      {new Date(workout.workout_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-1">
+                    {workout.description || workout.workout_type || 'Workout'}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    {workout.planned_duration_minutes && (
+                      <span>{workout.planned_duration_minutes} min</span>
+                    )}
+                    {workout.planned_distance_meters && (
+                      <span>{formatDistance(workout.planned_distance_meters)}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <AddWorkoutModal
+        isOpen={showAddWorkout}
+        onClose={() => setShowAddWorkout(false)}
+        onSuccess={loadWeekWorkouts}
+        mode="planned"
+      />
+    </div>
+  );
+}
