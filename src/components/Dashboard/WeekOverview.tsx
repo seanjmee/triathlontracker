@@ -58,34 +58,42 @@ export default function WeekOverview() {
       .gte('workout_date', startDateStr)
       .lte('workout_date', endDateStr);
 
-    const completedMap = new Map(completed?.map(c => [c.planned_workout_id, c]) || []);
-    const allWorkouts: PlannedWorkout[] = [];
+    const completedByPlannedId = new Map<string, any>();
+    const standaloneCompleted: any[] = [];
 
-    planned?.forEach(p => {
-      const comp = completedMap.get(p.id);
-      allWorkouts.push({
-        ...p,
-        completed: !!comp,
-      });
-      if (comp) {
-        completedMap.delete(p.id);
+    completed?.forEach(c => {
+      if (c.planned_workout_id) {
+        if (!completedByPlannedId.has(c.planned_workout_id)) {
+          completedByPlannedId.set(c.planned_workout_id, []);
+        }
+        completedByPlannedId.get(c.planned_workout_id)!.push(c);
+      } else {
+        standaloneCompleted.push(c);
       }
     });
 
-    completedMap.forEach(c => {
-      if (c.planned_workout_id === null) {
-        allWorkouts.push({
-          id: c.id,
-          workout_date: c.workout_date,
-          discipline: c.discipline,
-          workout_type: null,
-          planned_duration_minutes: c.actual_duration_minutes,
-          planned_distance_meters: c.actual_distance_meters,
-          description: c.notes || null,
-          notes: c.notes || null,
-          completed: true,
-        });
-      }
+    const allWorkouts: PlannedWorkout[] = [];
+
+    planned?.forEach(p => {
+      const completions = completedByPlannedId.get(p.id);
+      allWorkouts.push({
+        ...p,
+        completed: !!completions && completions.length > 0,
+      });
+    });
+
+    standaloneCompleted.forEach(c => {
+      allWorkouts.push({
+        id: c.id,
+        workout_date: c.workout_date,
+        discipline: c.discipline,
+        workout_type: null,
+        planned_duration_minutes: c.actual_duration_minutes,
+        planned_distance_meters: c.actual_distance_meters,
+        description: c.workout_notes || null,
+        notes: c.workout_notes || null,
+        completed: true,
+      });
     });
 
     allWorkouts.sort((a, b) => a.workout_date.localeCompare(b.workout_date));

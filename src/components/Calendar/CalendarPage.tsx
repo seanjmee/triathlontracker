@@ -54,27 +54,49 @@ export default function CalendarPage() {
       .gte('workout_date', startDateStr)
       .lte('workout_date', endDateStr);
 
-    const completedMap = new Map(completed?.map(c => [c.planned_workout_id, c]) || []);
-    const allWorkouts: Workout[] = [];
+    const completedByPlannedId = new Map<string, any>();
+    const standaloneCompleted: any[] = [];
 
-    planned?.forEach(p => {
-      const comp = completedMap.get(p.id);
-      allWorkouts.push({
-        id: p.id,
-        workout_date: p.workout_date,
-        discipline: p.discipline,
-        planned_duration_minutes: p.planned_duration_minutes,
-        planned_distance_meters: p.planned_distance_meters,
-        actual_duration_minutes: comp?.actual_duration_minutes,
-        actual_distance_meters: comp?.actual_distance_meters,
-        completed: !!comp,
-      });
-      if (comp) {
-        completedMap.delete(p.id);
+    completed?.forEach(c => {
+      if (c.planned_workout_id) {
+        if (!completedByPlannedId.has(c.planned_workout_id)) {
+          completedByPlannedId.set(c.planned_workout_id, []);
+        }
+        completedByPlannedId.get(c.planned_workout_id)!.push(c);
+      } else {
+        standaloneCompleted.push(c);
       }
     });
 
-    completedMap.forEach(c => {
+    const allWorkouts: Workout[] = [];
+
+    planned?.forEach(p => {
+      const completions = completedByPlannedId.get(p.id);
+      if (completions && completions.length > 0) {
+        const comp = completions[0];
+        allWorkouts.push({
+          id: p.id,
+          workout_date: p.workout_date,
+          discipline: p.discipline,
+          planned_duration_minutes: p.planned_duration_minutes,
+          planned_distance_meters: p.planned_distance_meters,
+          actual_duration_minutes: comp.actual_duration_minutes,
+          actual_distance_meters: comp.actual_distance_meters,
+          completed: true,
+        });
+      } else {
+        allWorkouts.push({
+          id: p.id,
+          workout_date: p.workout_date,
+          discipline: p.discipline,
+          planned_duration_minutes: p.planned_duration_minutes,
+          planned_distance_meters: p.planned_distance_meters,
+          completed: false,
+        });
+      }
+    });
+
+    standaloneCompleted.forEach(c => {
       allWorkouts.push({
         id: c.id,
         workout_date: c.workout_date,
