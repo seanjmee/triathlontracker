@@ -6,6 +6,7 @@ import RaceCountdown from './RaceCountdown';
 import WeekOverview from './WeekOverview';
 import QuickStats from './QuickStats';
 import RecentWorkouts from './RecentWorkouts';
+import WeeklyChart from './WeeklyChart';
 
 interface Race {
   id: string;
@@ -69,7 +70,8 @@ export default function Dashboard() {
           <div className="xl:col-span-2">
             <WeekOverview />
           </div>
-          <div>
+          <div className="space-y-6">
+            <WeeklyChart />
             <RecentWorkouts />
           </div>
         </div>

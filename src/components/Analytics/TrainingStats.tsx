@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react';
 import { Activity, TrendingUp, Calendar } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import PieChart from '../Charts/PieChart';
+import BarChart from '../Charts/BarChart';
+import { formatDateForDB } from '../../lib/dateUtils';
+
+interface DisciplineStats {
+  swim: { planned: number; completed: number; plannedDuration: number; completedDuration: number };
+  bike: { planned: number; completed: number; plannedDuration: number; completedDuration: number };
+  run: { planned: number; completed: number; plannedDuration: number; completedDuration: number };
+}
 
 export default function TrainingStats() {
   const { user } = useAuth();
@@ -11,10 +20,16 @@ export default function TrainingStats() {
     totalDuration: 0,
     avgPerWeek: 0,
   });
+  const [disciplineStats, setDisciplineStats] = useState<DisciplineStats>({
+    swim: { planned: 0, completed: 0, plannedDuration: 0, completedDuration: 0 },
+    bike: { planned: 0, completed: 0, plannedDuration: 0, completedDuration: 0 },
+    run: { planned: 0, completed: 0, plannedDuration: 0, completedDuration: 0 },
+  });
 
   useEffect(() => {
     if (user) {
       loadStats();
+      loadDisciplineStats();
     }
   }, [user]);
 
@@ -44,50 +59,171 @@ export default function TrainingStats() {
     });
   };
 
+  const loadDisciplineStats = async () => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+
+    const startDate = formatDateForDB(thirtyDaysAgo);
+
+    const { data: completed } = await supabase
+      .from('completed_workouts')
+      .select('discipline, actual_duration_minutes')
+      .eq('user_id', user!.id)
+      .gte('workout_date', startDate);
+
+    const { data: planned } = await supabase
+      .from('planned_workouts')
+      .select('discipline, planned_duration_minutes')
+      .eq('user_id', user!.id)
+      .gte('workout_date', startDate);
+
+    const newStats: DisciplineStats = {
+      swim: { planned: 0, completed: 0, plannedDuration: 0, completedDuration: 0 },
+      bike: { planned: 0, completed: 0, plannedDuration: 0, completedDuration: 0 },
+      run: { planned: 0, completed: 0, plannedDuration: 0, completedDuration: 0 },
+    };
+
+    completed?.forEach(w => {
+      const discipline = w.discipline.toLowerCase() as keyof DisciplineStats;
+      if (newStats[discipline]) {
+        newStats[discipline].completed++;
+        newStats[discipline].completedDuration += w.actual_duration_minutes;
+      }
+    });
+
+    planned?.forEach(w => {
+      const discipline = w.discipline.toLowerCase() as keyof DisciplineStats;
+      if (newStats[discipline] && w.planned_duration_minutes) {
+        newStats[discipline].planned++;
+        newStats[discipline].plannedDuration += w.planned_duration_minutes;
+      }
+    });
+
+    setDisciplineStats(newStats);
+  };
+
+  const pieChartData = [
+    {
+      label: 'Swim',
+      value: disciplineStats.swim.completed,
+      color: '#06b6d4',
+    },
+    {
+      label: 'Bike',
+      value: disciplineStats.bike.completed,
+      color: '#10b981',
+    },
+    {
+      label: 'Run',
+      value: disciplineStats.run.completed,
+      color: '#f97316',
+    },
+  ].filter(item => item.value > 0);
+
+  const barChartData = [
+    {
+      label: 'Swim',
+      planned: Math.round(disciplineStats.swim.plannedDuration / 60),
+      completed: Math.round(disciplineStats.swim.completedDuration / 60),
+      color: '#06b6d4',
+    },
+    {
+      label: 'Bike',
+      planned: Math.round(disciplineStats.bike.plannedDuration / 60),
+      completed: Math.round(disciplineStats.bike.completedDuration / 60),
+      color: '#10b981',
+    },
+    {
+      label: 'Run',
+      planned: Math.round(disciplineStats.run.plannedDuration / 60),
+      completed: Math.round(disciplineStats.run.completedDuration / 60),
+      color: '#f97316',
+    },
+  ];
+
+  const barChartWorkoutsData = [
+    {
+      label: 'Swim',
+      planned: disciplineStats.swim.planned,
+      completed: disciplineStats.swim.completed,
+      color: '#06b6d4',
+    },
+    {
+      label: 'Bike',
+      planned: disciplineStats.bike.planned,
+      completed: disciplineStats.bike.completed,
+      color: '#10b981',
+    },
+    {
+      label: 'Run',
+      planned: disciplineStats.run.planned,
+      completed: disciplineStats.run.completed,
+      color: '#f97316',
+    },
+  ];
+
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Training Statistics</h3>
+    <div className="space-y-6">
+      <div className="metric-card">
+        <h3 className="text-xl font-bold text-slate-900 mb-6">All-Time Statistics</h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-blue-100 rounded-lg">
-            <Activity className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="p-3 bg-cyan-100 rounded-lg mb-2">
+              <Activity className="w-6 h-6 text-cyan-600" />
+            </div>
+            <p className="text-sm text-slate-600 mb-1">Total Workouts</p>
+            <p className="text-2xl font-bold text-slate-900">{stats.totalWorkouts}</p>
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Total Workouts</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalWorkouts}</p>
+
+          <div className="flex flex-col items-center text-center">
+            <div className="p-3 bg-emerald-100 rounded-lg mb-2">
+              <TrendingUp className="w-6 h-6 text-emerald-600" />
+            </div>
+            <p className="text-sm text-slate-600 mb-1">Total Distance</p>
+            <p className="text-2xl font-bold text-slate-900">{stats.totalDistance} km</p>
+          </div>
+
+          <div className="flex flex-col items-center text-center">
+            <div className="p-3 bg-orange-100 rounded-lg mb-2">
+              <Calendar className="w-6 h-6 text-orange-600" />
+            </div>
+            <p className="text-sm text-slate-600 mb-1">Total Time</p>
+            <p className="text-2xl font-bold text-slate-900">{Math.round(stats.totalDuration / 60)}h</p>
+          </div>
+
+          <div className="flex flex-col items-center text-center">
+            <div className="p-3 bg-violet-100 rounded-lg mb-2">
+              <TrendingUp className="w-6 h-6 text-violet-600" />
+            </div>
+            <p className="text-sm text-slate-600 mb-1">Avg per Week</p>
+            <p className="text-2xl font-bold text-slate-900">{stats.avgPerWeek}</p>
           </div>
         </div>
+      </div>
 
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-green-100 rounded-lg">
-            <TrendingUp className="w-6 h-6 text-green-600" />
-          </div>
+      <div className="metric-card">
+        <h3 className="text-xl font-bold text-slate-900 mb-2">Last 30 Days</h3>
+        <p className="text-sm text-slate-500 mb-6">Planned vs Completed Workouts</p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
-            <p className="text-sm text-gray-600">Total Distance</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalDistance} km</p>
+            <h4 className="text-center text-sm font-semibold text-slate-700 mb-4">Completed Workouts by Discipline</h4>
+            <PieChart data={pieChartData} size={220} />
+          </div>
+
+          <div>
+            <h4 className="text-center text-sm font-semibold text-slate-700 mb-4">Workout Count: Planned vs Completed</h4>
+            <BarChart data={barChartWorkoutsData} height={220} unit="" />
           </div>
         </div>
+      </div>
 
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-orange-100 rounded-lg">
-            <Calendar className="w-6 h-6 text-orange-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Total Time</p>
-            <p className="text-2xl font-bold text-gray-900">{Math.round(stats.totalDuration / 60)}h</p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-purple-100 rounded-lg">
-            <TrendingUp className="w-6 h-6 text-purple-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Avg per Week</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.avgPerWeek}</p>
-          </div>
-        </div>
+      <div className="metric-card">
+        <h3 className="text-xl font-bold text-slate-900 mb-2">Training Volume</h3>
+        <p className="text-sm text-slate-500 mb-6">Duration in hours (last 30 days)</p>
+        <BarChart data={barChartData} height={250} unit="h" />
       </div>
     </div>
   );
