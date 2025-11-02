@@ -38,54 +38,67 @@ export default function RaceCountdown({ race }: RaceCountdownProps) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl p-8 text-white shadow-lg">
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h2 className="text-3xl font-bold mb-2">{race.race_name}</h2>
-          <p className="text-blue-100">{getDistanceLabel(race.distance_type)}</p>
-        </div>
-        <Trophy className="w-12 h-12 text-blue-200" />
-      </div>
+    <div className="bg-gradient-to-br from-cyan-600 via-cyan-700 to-teal-700 rounded-xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32"></div>
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="flex items-center gap-3">
-          <Calendar className="w-5 h-5 text-blue-200" />
+      <div className="relative">
+        <div className="flex items-start justify-between mb-6">
           <div>
-            <p className="text-sm text-blue-100">Race Date</p>
-            <p className="font-semibold">{raceDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-1">{race.race_name}</h2>
+            <p className="text-cyan-100 font-medium">{getDistanceLabel(race.distance_type)}</p>
+          </div>
+          <div className="w-14 h-14 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
+            <Trophy className="w-8 h-8 text-yellow-300" />
           </div>
         </div>
 
-        {race.race_location && (
-          <div className="flex items-center gap-3">
-            <MapPin className="w-5 h-5 text-blue-200" />
-            <div>
-              <p className="text-sm text-blue-100">Location</p>
-              <p className="font-semibold">{race.race_location}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3">
+            <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-5 h-5 text-cyan-100" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-cyan-100 font-medium">Race Date</p>
+              <p className="font-semibold text-sm truncate">{raceDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
             </div>
           </div>
-        )}
 
-        {race.goal_finish_time_minutes && (
-          <div className="flex items-center gap-3">
-            <Target className="w-5 h-5 text-blue-200" />
-            <div>
-              <p className="text-sm text-blue-100">Goal Time</p>
-              <p className="font-semibold">{formatGoalTime(race.goal_finish_time_minutes)}</p>
+          {race.race_location && (
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-cyan-100" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-cyan-100 font-medium">Location</p>
+                <p className="font-semibold text-sm truncate">{race.race_location}</p>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
-        <div className="flex items-end gap-4">
-          <div>
-            <p className="text-5xl font-bold">{daysUntilRace}</p>
-            <p className="text-blue-100 mt-1">days to go</p>
-          </div>
-          <div className="mb-2">
-            <p className="text-2xl font-semibold">{weeksUntilRace}</p>
-            <p className="text-sm text-blue-100">weeks</p>
+          {race.goal_finish_time_minutes && (
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Target className="w-5 h-5 text-cyan-100" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-cyan-100 font-medium">Goal Time</p>
+                <p className="font-semibold text-sm">{formatGoalTime(race.goal_finish_time_minutes)}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-5xl sm:text-6xl font-bold tracking-tight">{daysUntilRace}</p>
+              <p className="text-cyan-100 mt-2 font-medium">days to go</p>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold">{weeksUntilRace}</p>
+              <p className="text-sm text-cyan-100 mt-1">weeks</p>
+            </div>
           </div>
         </div>
       </div>

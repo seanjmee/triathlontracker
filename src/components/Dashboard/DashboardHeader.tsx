@@ -9,20 +9,22 @@ export default function DashboardHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="bg-white border-b border-slate-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-900">TriTrack</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
+              TriTrack
+            </h1>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-2">
             <button
               onClick={() => setCurrentPage('dashboard')}
-              className={`flex items-center gap-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
                 currentPage === 'dashboard'
-                  ? 'text-blue-600 font-medium'
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'bg-cyan-50 text-cyan-700'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <Activity className="w-5 h-5" />
@@ -30,10 +32,10 @@ export default function DashboardHeader() {
             </button>
             <button
               onClick={() => setCurrentPage('calendar')}
-              className={`flex items-center gap-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
                 currentPage === 'calendar'
-                  ? 'text-blue-600 font-medium'
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'bg-cyan-50 text-cyan-700'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <Calendar className="w-5 h-5" />
@@ -41,10 +43,10 @@ export default function DashboardHeader() {
             </button>
             <button
               onClick={() => setCurrentPage('settings')}
-              className={`flex items-center gap-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
                 currentPage === 'settings'
-                  ? 'text-blue-600 font-medium'
-                  : 'text-gray-600 hover:text-blue-600'
+                  ? 'bg-cyan-50 text-cyan-700'
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
               <Settings className="w-5 h-5" />
@@ -52,14 +54,14 @@ export default function DashboardHeader() {
             </button>
           </nav>
 
-          <div className="hidden md:flex items-center gap-4">
-            <div className="flex items-center gap-2 text-gray-700">
-              <User className="w-5 h-5" />
-              <span className="text-sm">{user?.email}</span>
+          <div className="hidden md:flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+              <User className="w-4 h-4 text-slate-600" />
+              <span className="text-sm font-medium text-slate-700">{user?.email}</span>
             </div>
             <button
               onClick={() => signOut()}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-red-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all font-medium"
             >
               <LogOut className="w-5 h-5" />
               <span>Sign Out</span>
@@ -68,22 +70,22 @@ export default function DashboardHeader() {
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-gray-600 hover:text-gray-900"
+            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <nav className="flex flex-col gap-4">
+          <div className="md:hidden py-4 border-t border-slate-200">
+            <nav className="flex flex-col gap-2">
               <button
                 onClick={() => {
                   setCurrentPage('dashboard');
                   setMobileMenuOpen(false);
                 }}
-                className={`flex items-center gap-2 ${
-                  currentPage === 'dashboard' ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
+                  currentPage === 'dashboard' ? 'bg-cyan-50 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 <Activity className="w-5 h-5" />
@@ -94,8 +96,8 @@ export default function DashboardHeader() {
                   setCurrentPage('calendar');
                   setMobileMenuOpen(false);
                 }}
-                className={`flex items-center gap-2 ${
-                  currentPage === 'calendar' ? 'text-blue-600' : 'text-gray-600 hover:text-blue-600'
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
+                  currentPage === 'calendar' ? 'bg-cyan-50 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 <Calendar className="w-5 h-5" />
@@ -106,8 +108,8 @@ export default function DashboardHeader() {
                   setCurrentPage('settings');
                   setMobileMenuOpen(false);
                 }}
-                className={`flex items-center gap-2 ${
-                  currentPage === 'settings' ? 'text-blue-600' : 'text-gray-600 hover:text-blue-600'
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-medium ${
+                  currentPage === 'settings' ? 'bg-cyan-50 text-cyan-700' : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 <Settings className="w-5 h-5" />
@@ -115,7 +117,7 @@ export default function DashboardHeader() {
               </button>
               <button
                 onClick={() => signOut()}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-all font-medium"
               >
                 <LogOut className="w-5 h-5" />
                 <span>Sign Out</span>
