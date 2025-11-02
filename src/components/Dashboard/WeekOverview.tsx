@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import AddWorkoutModal from '../Workouts/AddWorkoutModal';
 import EditWorkoutModal from '../Workouts/EditWorkoutModal';
+import { formatDateForDB } from '../../lib/dateUtils';
 
 interface PlannedWorkout {
   id: string;
@@ -32,25 +33,28 @@ export default function WeekOverview() {
 
   const loadWeekWorkouts = async () => {
     const today = new Date();
-    const startOfWeek = new Date(today);
+    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7));
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const startDateStr = formatDateForDB(startOfWeek);
+    const endDateStr = formatDateForDB(endOfWeek);
 
     const { data: planned } = await supabase
       .from('planned_workouts')
       .select('*')
       .eq('user_id', user!.id)
-      .gte('workout_date', startOfWeek.toISOString().split('T')[0])
-      .lte('workout_date', endOfWeek.toISOString().split('T')[0])
+      .gte('workout_date', startDateStr)
+      .lte('workout_date', endDateStr)
       .order('workout_date');
 
     const { data: completed } = await supabase
       .from('completed_workouts')
       .select('planned_workout_id')
       .eq('user_id', user!.id)
-      .gte('workout_date', startOfWeek.toISOString().split('T')[0])
-      .lte('workout_date', endOfWeek.toISOString().split('T')[0]);
+      .gte('workout_date', startDateStr)
+      .lte('workout_date', endDateStr);
 
     const completedIds = new Set(completed?.map(c => c.planned_workout_id) || []);
 
@@ -84,7 +88,7 @@ export default function WeekOverview() {
 
   const getWeekDays = () => {
     const today = new Date();
-    const startOfWeek = new Date(today);
+    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7));
 
     return Array.from({ length: 7 }, (_, i) => {
@@ -151,9 +155,12 @@ export default function WeekOverview() {
 
       <div className="grid grid-cols-7 gap-2 mb-4">
         {weekDays.map((day, i) => {
-          const dateStr = day.toISOString().split('T')[0];
+          const dateStr = formatDateForDB(day);
           const dayWorkouts = workouts.filter(w => w.workout_date === dateStr);
-          const isToday = day.toDateString() === new Date().toDateString();
+          const today = new Date();
+          const isToday = day.getFullYear() === today.getFullYear() &&
+                         day.getMonth() === today.getMonth() &&
+                         day.getDate() === today.getDate();
 
           return (
             <div

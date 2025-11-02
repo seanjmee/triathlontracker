@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { TrendingUp, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { formatDateForDB } from '../../lib/dateUtils';
 
 export default function QuickStats() {
   const { user } = useAuth();
@@ -19,21 +20,24 @@ export default function QuickStats() {
 
   const loadStats = async () => {
     const today = new Date();
-    const startOfWeek = new Date(today);
+    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     startOfWeek.setDate(today.getDate() - today.getDay());
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const startOfWeekStr = formatDateForDB(startOfWeek);
+    const startOfMonthStr = formatDateForDB(startOfMonth);
 
     const { data: weekWorkouts } = await supabase
       .from('completed_workouts')
       .select('actual_duration_minutes')
       .eq('user_id', user!.id)
-      .gte('workout_date', startOfWeek.toISOString().split('T')[0]);
+      .gte('workout_date', startOfWeekStr);
 
     const { data: monthWorkouts } = await supabase
       .from('completed_workouts')
       .select('id')
       .eq('user_id', user!.id)
-      .gte('workout_date', startOfMonth.toISOString().split('T')[0]);
+      .gte('workout_date', startOfMonthStr);
 
     const totalMinutes = weekWorkouts?.reduce((sum, w) => sum + w.actual_duration_minutes, 0) || 0;
 

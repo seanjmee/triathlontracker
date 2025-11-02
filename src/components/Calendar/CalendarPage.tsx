@@ -6,6 +6,7 @@ import DashboardHeader from '../Dashboard/DashboardHeader';
 import DayDetailModal from './DayDetailModal';
 import WeeklySummary from './WeeklySummary';
 import MonthlyStats from './MonthlyStats';
+import { formatDateForDB } from '../../lib/dateUtils';
 
 interface Workout {
   id: string;
@@ -36,19 +37,22 @@ export default function CalendarPage() {
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
+    const startDateStr = formatDateForDB(startOfMonth);
+    const endDateStr = formatDateForDB(endOfMonth);
+
     const { data: planned } = await supabase
       .from('planned_workouts')
       .select('*')
       .eq('user_id', user!.id)
-      .gte('workout_date', startOfMonth.toISOString().split('T')[0])
-      .lte('workout_date', endOfMonth.toISOString().split('T')[0]);
+      .gte('workout_date', startDateStr)
+      .lte('workout_date', endDateStr);
 
     const { data: completed } = await supabase
       .from('completed_workouts')
       .select('*')
       .eq('user_id', user!.id)
-      .gte('workout_date', startOfMonth.toISOString().split('T')[0])
-      .lte('workout_date', endOfMonth.toISOString().split('T')[0]);
+      .gte('workout_date', startDateStr)
+      .lte('workout_date', endDateStr);
 
     const completedMap = new Map(completed?.map(c => [c.planned_workout_id, c]) || []);
     const allWorkouts: Workout[] = [];
@@ -108,7 +112,7 @@ export default function CalendarPage() {
 
   const getWorkoutsForDate = (date: Date | null) => {
     if (!date) return [];
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDateForDB(date);
     return workouts.filter(w => w.workout_date === dateStr);
   };
 
@@ -139,7 +143,9 @@ export default function CalendarPage() {
   const isToday = (date: Date | null) => {
     if (!date) return false;
     const today = new Date();
-    return date.toDateString() === today.toDateString();
+    return date.getFullYear() === today.getFullYear() &&
+           date.getMonth() === today.getMonth() &&
+           date.getDate() === today.getDate();
   };
 
   const days = getDaysInMonth();
@@ -206,7 +212,7 @@ export default function CalendarPage() {
                   return (
                     <button
                       key={dayIndex}
-                      onClick={() => date && setSelectedDate(date.toISOString().split('T')[0])}
+                      onClick={() => date && setSelectedDate(formatDateForDB(date))}
                       disabled={!date}
                       className={`min-h-24 p-2 border-b border-r border-gray-200 hover:bg-gray-50 transition-colors text-left ${
                         !date ? 'bg-gray-50 cursor-default' : ''

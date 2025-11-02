@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Plus, CheckCircle2, Circle, Clock, TrendingUp, Heart, Activity } from 'lucide-react';
 import AddWorkoutModal from '../Workouts/AddWorkoutModal';
+import { parseDBDate } from '../../lib/dateUtils';
 
 interface Workout {
   id: string;
@@ -24,7 +25,7 @@ export default function DayDetailModal({ date, workouts, onClose, onRefresh }: D
   const [showAddPlanned, setShowAddPlanned] = useState(false);
   const [showAddCompleted, setShowAddCompleted] = useState(false);
 
-  const dateObj = new Date(date + 'T00:00:00');
+  const dateObj = parseDBDate(date);
   const formattedDate = dateObj.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
