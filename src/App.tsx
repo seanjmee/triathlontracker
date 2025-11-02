@@ -4,6 +4,7 @@ import AuthPage from './components/Auth/AuthPage';
 import RaceSetupWizard from './components/Onboarding/RaceSetupWizard';
 import Dashboard from './components/Dashboard/Dashboard';
 import CalendarPage from './components/Calendar/CalendarPage';
+import SettingsPage from './components/Settings/SettingsPage';
 import { supabase } from './lib/supabase';
 
 type Page = 'dashboard' | 'calendar' | 'settings';
@@ -68,6 +69,7 @@ function AppContent() {
     <NavigationContext.Provider value={{ currentPage, setCurrentPage }}>
       {currentPage === 'dashboard' && <Dashboard />}
       {currentPage === 'calendar' && <CalendarPage />}
+      {currentPage === 'settings' && <SettingsPage />}
     </NavigationContext.Provider>
   );
 }
